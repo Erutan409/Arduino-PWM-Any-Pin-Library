@@ -1,21 +1,24 @@
-#ifndef RELAY_H
-#define RELAY_H
+#ifndef PWM_H
+#define PWM_H
 
 #include <Arduino.h>
+#include <Avail.h>
+
+typedef unsigned char uint24_t[3];
 
 class PWM {
 
 	public:
-		PWM(unsigned short pin);
-		PWM &write(unsigned short pwm);
+		PWM(uint8_t pin);
+		PWM &mode(uint8_t mode);
+		PWM &write(uint8_t pwm);
 		void run(void);
 
 	private:
-		unsigned short _pin;
-		unsigned long _last_read;
-		unsigned short _pwm;
-		unsigned int _compare;
-		unsigned long _pwm_increment = 3906;
+		uint8_t _pin;
+		uint32_t _lastAction = micros();
+		uint8_t _pwm = 0;
+		bool _state = false;
 
 };
 

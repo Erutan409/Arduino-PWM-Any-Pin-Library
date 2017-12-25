@@ -1,41 +1,46 @@
 #include <PWM.h>
-#include <Arduino.h>
+#include <math.h>
 
-PWM::PWM(unsigned short pin) {
+PWM::PWM(uint8_t pin) {
 	this->_pin = pin;
-	this->_last_read = micros();
+	this->mode(OUTPUT);
+	this->_lastAction = micros();
 }
 
-PWM &PWM::write(unsigned short pwm) {
-	if (pwm > 255) { pwm = 255; }
+PWM &PWM::mode(uint8_t mode) {
+	pinMode(this->_pin, mode);
+
+	return *this;
+}
+
+PWM &PWM::write(uint8_t pwm) {
 	this->_pwm = pwm;
-	this->_compare = this->_pwm * this->_pwm_increment;
-	digitalWrite(this->_pin, LOW);
-	this->_last_read = micros();
 
 	return *this;
 }
 
 void PWM::run(void) {
+	uint8_t &pwm = this->_pwm;
+	bool &state = this->_state;
+	uint32_t &last = this->_lastAction;
+	uint8_t &pin = this->_pin;
 
-	unsigned short *pin = &this->_pin;
+	uint32_t width = round((float)(pwm * 7.8125));
+	uint32_t inverse = 0x7D0 - width;
 
-	switch (this->_pwm) {
-
-	case 255:
-		digitalWrite(*pin, HIGH);
-		return;
-
-	case 0:
-		digitalWrite(*pin, LOW);
-		break;
-
-	default:
-		// approximately 3906 microseconds for each pwm
-		if ((this->last_read + this->_compare) <= micros()) {
-			digitalWrite();
-		}
-
+	if (!state && pwm > 0 && Avail::micros(&inverse, &last)) {
+		last = micros();
+		state = true;
+		digitalWrite(pin, HIGH);
+	} else if (state && pwm < 255 && Avail::micros(&width, &last)) {
+		last = micros();
+		state = false;
+		digitalWrite(pin, LOW);
+	} else if (!state && pwm == 255) { // left potential bug in code that could trigger on rollover
+		state = true;
+		digitalWrite(pin, HIGH);
+	} else if (state && pwm == 0) { // left potential bug in code that could trigger on rollover
+		state = false;
+		digitalWrite(pin, LOW);
 	}
-
 }
