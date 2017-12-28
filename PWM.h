@@ -4,13 +4,17 @@
 #include <Arduino.h>
 #include <Avail.h>
 
-typedef unsigned char uint24_t[3];
+enum PWM_Mode {
+	PWM_High = HIGH
+	,PWM_Low = LOW
+};
 
 class PWM {
 
 	public:
 		PWM(uint8_t pin);
-		PWM &mode(uint8_t mode);
+		PWM &mode(PWM_Mode mode);
+		PWM_Mode *getMode(void);
 		PWM &write(uint8_t pwm);
 		void run(void);
 
@@ -18,6 +22,7 @@ class PWM {
 		uint8_t _pin;
 		uint32_t _lastAction = micros();
 		uint8_t _pwm = 0;
+		PWM_Mode _mode = PWM_High;
 		bool _state = false;
 
 };
